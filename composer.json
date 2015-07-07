@@ -1,0 +1,13 @@
+{
+    "name": "igorbrites/entity-generator-php",
+    "description": "Entity Generator for PHP based on database",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Igor Brites",
+            "email": "igor.brites.87@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
