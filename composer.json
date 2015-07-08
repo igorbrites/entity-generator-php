@@ -1,5 +1,5 @@
 {
-    "name": "igorbrites/entity-generator-php",
+    "name": "igorbrites/entity-generator",
     "description": "Entity Generator for PHP based on database",
     "license": "MIT",
     "authors": [
@@ -9,5 +9,18 @@
         }
     ],
     "minimum-stability": "dev",
-    "require": {}
+    "require": {
+        "php": ">= 5.5"
+    },
+    "bin": [
+        "entity-generator"
+    ],
+    "suggest": {
+        "nesbot/carbon": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "EntityGenerator\\": ["src/", "tests/src/"]
+        }
+    }
 }

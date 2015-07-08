@@ -1,0 +1,9 @@
+{
+    "namespace": "MaxMilhas\\Entities\\Model",
+    "database": {
+        "schema": "development",
+        "host": "10.10.10.101",
+        "user": "root",
+        "password": "maxmilhas"
+    }
+}
