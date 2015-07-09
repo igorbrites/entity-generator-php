@@ -1,0 +1,28 @@
+{% autoescape false %}
+    /**
+     * Defines the value of {{ field.name }}
+     *
+     * @throws \InvalidArgumentException
+     * @return $this
+     */
+    public function set{{ field.name|capitalize }}({% if field.isTyped %}{{ field.type }} {% endif %}${{ field.name }})
+    {
+        {% if not field.nullable %}
+        if (is_null(${{ field.name }})) {
+            throw new \InvalidArgumentException('Field {{ field.name }} cannot be null');
+        }
+        {% endif %}
+        {% if field.type == 'varchar' %}
+        if (isset(${{ field.name }}[{{ field.maxLength }}])) {
+            throw new \InvalidArgumentException('Value too long for field {{ field.name }}');
+        }
+        {% elseif field.type == 'enum' %}
+        if (!in_array(${{ field.name }}, $this->{{ field.name }})) {
+            throw new \InvalidArgumentException('Invalid option for {{ field.name }}');
+        }
+        {% endif %}
+        $this->{{ field.name }} = ${{ field.name }};
+
+        return $this;
+    }
+{% endautoescape %}

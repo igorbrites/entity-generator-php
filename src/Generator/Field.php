@@ -2,8 +2,20 @@
 
 namespace EntityGenerator\Generator;
 
-class Field
+use EntityGenerator\Util\String;
+
+class Field extends Template
 {
+    const INT         = 'int';
+    const VARCHAR     = 'varchar';
+    const DATETIME    = 'datetime';
+    const DATE        = 'date';
+    const TIMESTAMP   = 'timestamp';
+    const ENUM        = 'enum';
+    const FLOAT       = 'float';
+    const TEXT        = 'text';
+    const FOREIGN_KEY = 'fk';
+
     /**
      * @var string name
      */
@@ -177,5 +189,58 @@ class Field
         $this->foreignKey = $foreignKey;
 
         return $this;
+    }
+
+    public function getGetter()
+    {
+        $template = $this->getTwig()->loadTemplate('getter');
+        return $template->render(['field' => $this]);
+    }
+
+    public function getSetter()
+    {
+        $template = $this->getTwig()->loadTemplate('setter');
+        return $template->render(['field' => $this]);
+    }
+
+    public function getAttribute()
+    {
+        $template = $this->getTwig()->loadTemplate('attribute');
+        return $template->render(['field' => $this]);
+    }
+
+    /**
+     * @param array $array
+     *
+     * @return Field
+     */
+    public static function createFromArray(array $array)
+    {
+        $fieldName = $array['COLUMN_NAME'];
+        $defaultValue = $array['COLUMN_DEFAULT'];
+        $isNullable = $array['IS_NULLABLE'] === 'YES';
+        $fieldDataType = $array['DATA_TYPE'];
+        $fieldType = $array['COLUMN_TYPE'];
+        $maxLength = $array['CHARACTER_MAXIMUM_LENGTH'];
+        $referencedEntity = $array['REFERENCED_TABLE_NAME'];
+
+        /** @var Field $field */
+        $field = (new self())
+            ->setName($fieldName)
+            ->setDefault($defaultValue)
+            ->setNullable($isNullable)
+            ->setType(is_null($referencedEntity) ? $fieldDataType : Field::FOREIGN_KEY)
+            ->setMaxLength($maxLength)
+        ;
+
+        if (!is_null($referencedEntity)) {
+            $field->setForeignKey($referencedEntity);
+        }
+
+        if (Field::ENUM === $fieldDataType) {
+            $field->setOptions(String::convertEnumToArray($fieldType));
+        }
+
+        return $field;
     }
 }

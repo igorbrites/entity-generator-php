@@ -2,46 +2,141 @@
 
 namespace EntityGenerator\Generator;
 
+use EntityGenerator\Util\Config;
+use EntityGenerator\Util\Database;
 use EntityGenerator\Util\String;
 
-class Entity
+class Entity extends Template
 {
-    const INT         = 'int';
-    const VARCHAR     = 'varchar';
-    const DATETIME    = 'datetime';
-    const DATE        = 'date';
-    const TIMESTAMP   = 'timestamp';
-    const ENUM        = 'enum';
-    const FLOAT       = 'float';
-    const TEXT        = 'text';
-    const FOREIGN_KEY = 'fk';
-
+    /**
+     * @var string tableName
+     */
     private $tableName;
 
-    private $schema;
+    /**
+     * @var string name
+     */
+    private $name;
 
-    private $entityName;
-
+    /**
+     * @var string file
+     */
     private $file;
 
-    private $setters;
+    /**
+     * @var Field fields
+     */
+    private $fields;
 
-    private $getters;
-
-    public function __construct($tableName, $schema)
+    public function __construct($tableName)
     {
+        parent::__construct();
+
         $this->tableName = $tableName;
-        $this->schema = $schema;
-        $this->entityName = String::convertToCamelCase($tableName);
+        $this->name = String::convertToCamelCase($tableName);
 
         $this->file = '';
-        $this->setters = [];
-        $this->getters = [];
+        $this->fields = [];
     }
 
+    /**
+     * @return string
+     */
+    public function getTableName()
+    {
+        return $this->tableName;
+    }
+
+    /**
+     * @param string $tableName
+     *
+     * @return Entity
+     */
+    public function setTableName($tableName)
+    {
+        $this->tableName = $tableName;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return Entity
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFile()
+    {
+        return $this->file;
+    }
+
+    /**
+     * @param string $file
+     *
+     * @return Entity
+     */
+    public function setFile($file)
+    {
+        $this->file = $file;
+
+        return $this;
+    }
+
+    /**
+     * @return Field
+     */
+    public function getFields()
+    {
+        return $this->fields;
+    }
+
+    /**
+     * @param Field[] $fields
+     *
+     * @return Entity
+     */
+    public function setFields(array $fields)
+    {
+        $this->fields = $fields;
+
+        return $this;
+    }
+
+    /**
+     * @param Field $field
+     *
+     * @return Entity
+     */
+    public function addField(Field $field)
+    {
+        $this->fields[] = $field;
+
+        return $this;
+    }
+
+    /**
+     * @return Entity
+     */
     public function generate()
     {
-        $connection = Connection::getInstance();
+        $connection = Database::getInstance()->getConnection();
 
         $stmt = $connection->prepare(
             ' SELECT ' .
@@ -64,46 +159,46 @@ class Entity
             '    AND c.TABLE_NAME = ?;'
         );
 
-        if (!$stmt->execute([$this->schema, $this->tableName])) {
-            throw new \PDOException('Any fields found on table ' . $this->tableName);
+        if (!$stmt->execute([Config::getinstance()->getDatabase()['schema'], $this->tableName])) {
+            throw new \PDOException('No fields found on table ' . $this->tableName);
         }
 
         $fields = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        foreach ($fields as $field) {
-            $fieldName = $field['COLUMN_NAME'];
-            $defaultValue = $field['COLUMN_DEFAULT'];
-            $isNullable = $field['IS_NULLABLE'] === 'YES';
-            $fieldDataType = $field['DATA_TYPE'];
-            $fieldType = $field['COLUMN_TYPE'];
-            $maxLength = $field['CHARACTER_MAXIMUM_LENGTH'];
-            $referencedEntity = $field['REFERENCED_TABLE_NAME'];
-
-            $field = (new Field())
-                ->setName($fieldName)
-                ->setDefault($defaultValue)
-                ->setNullable($isNullable)
-                ->setType($fieldDataType)
-                ->setMaxLength($maxLength)
-            ;
-
-
-
+        foreach ($fields as $array) {
+            $field = Field::createFromArray($array);
+            $this->addField($field);
         }
+
+        return $this;
     }
 
+    /**
+     * @return Entity
+     */
+    public function render()
+    {
+        $template = $this->getTwig()->loadTemplate('entity');
+        $this->setFile($template->render(['entity' => $this]));
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
     public function saveToFile()
     {
+        if (empty($this->file)) {
+            $this->render();
+        }
 
-    }
+        $config = Config::getinstance();
 
-    public function setMethod($field)
-    {
+        if (!file_exists($config->getOutputDir())) {
+            mkdir($config->getOutputDir(), 0777, true);
+        }
 
-    }
-
-    public function getMethod($field)
-    {
-
+        return file_put_contents($config->getOutputDir() . '/' . $this->name . '.php', $this->file);
     }
 }

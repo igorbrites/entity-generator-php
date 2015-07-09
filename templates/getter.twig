@@ -1,0 +1,22 @@
+{% autoescape false %}
+    /**
+     * Returns the value of {{ field.name }}
+     *
+     * @return {{ field.type }}
+     */
+    public function get{{ field.name|capitalize }}()
+    {
+        return $this->{{ field.name }};
+    }
+    {% if field.type == 'enum' %}
+    /**
+     * Returns the options for field {{ field.name }}
+     *
+     * @return array
+     */
+    public function get{{ field.name|capitalize }}Options()
+    {
+        return $this->{{ field.name }}Options;
+    }
+    {% endif %}
+{% endautoescape %}

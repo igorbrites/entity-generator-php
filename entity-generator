@@ -1,6 +1,8 @@
 #!/usr/bin/env php
 <?php
 
+defined('ROOT_PATH') || define('ROOT_PATH', realpath(__DIR__));
+
 foreach ([
              __DIR__ . '/../../autoload.php',
              __DIR__ . '/../vendor/autoload.php',

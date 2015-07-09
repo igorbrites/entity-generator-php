@@ -1,0 +1,12 @@
+{% autoescape false %}
+    /**
+     * @var {{ field.type }} {{ field.name }}
+     */
+    protected ${{ field.name }};
+    {% if field.type == 'enum' %}
+    /**
+     * @var array {{ field.name }}Options
+     */
+    protected ${{ field.name }}Options = [{% for option in field.options %}'{{ option }}'{% endfor %}];
+    {% endif %}
+{% endautoescape %}

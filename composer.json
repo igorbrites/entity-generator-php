@@ -10,7 +10,8 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "php": ">= 5.5"
+        "php": ">= 5.5",
+        "twig/twig": "~1.0"
     },
     "bin": [
         "entity-generator"
