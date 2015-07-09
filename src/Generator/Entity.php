@@ -178,8 +178,8 @@ class Entity extends Template
      */
     public function render()
     {
-        $template = $this->getTwig()->loadTemplate('entity');
-        $this->setFile($template->render(['entity' => $this]));
+        $template = $this->getTwig()->loadTemplate('entity.twig');
+        $this->setFile($template->render(['entity' => $this, 'config' => Config::getinstance()]));
 
         return $this;
     }

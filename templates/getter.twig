@@ -1,10 +1,10 @@
 {% autoescape false %}
-    /**
+/**
      * Returns the value of {{ field.name }}
      *
-     * @return {{ field.type }}
+     * @return {{ field.type == 'enum' ? 'string' : field.type }}
      */
-    public function get{{ field.name|capitalize }}()
+    public function get{{ field.ucName }}()
     {
         return $this->{{ field.name }};
     }
@@ -14,7 +14,7 @@
      *
      * @return array
      */
-    public function get{{ field.name|capitalize }}Options()
+    public function get{{ field.ucName }}Options()
     {
         return $this->{{ field.name }}Options;
     }

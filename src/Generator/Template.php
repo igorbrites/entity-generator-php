@@ -13,11 +13,7 @@ abstract class Template
         \Twig_Autoloader::register();
 
         $loader = new \Twig_Loader_Filesystem(ROOT_PATH . '/templates');
-        $this->twig = new \Twig_Environment(
-            $loader, [
-                'cache' => ROOT_PATH . '/cache',
-            ]
-        );
+        $this->twig = new \Twig_Environment($loader);
     }
 
     /**

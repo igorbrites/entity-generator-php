@@ -1,26 +1,31 @@
 {% autoescape false %}
-    /**
+/**
      * Defines the value of {{ field.name }}
+     *
+     * @param {{ field.type == 'enum' ? 'string' : field.type }} ${{ field.name }}
      *
      * @throws \InvalidArgumentException
      * @return $this
      */
-    public function set{{ field.name|capitalize }}({% if field.isTyped %}{{ field.type }} {% endif %}${{ field.name }})
+    public function set{{ field.ucName }}({% if field.isTyped %}{{ field.type }} {% endif %}${{ field.name }})
     {
-        {% if not field.nullable %}
+{% if not field.nullable %}
         if (is_null(${{ field.name }})) {
             throw new \InvalidArgumentException('Field {{ field.name }} cannot be null');
         }
-        {% endif %}
-        {% if field.type == 'varchar' %}
+
+{% endif %}
+{% if field.type == 'varchar' %}
         if (isset(${{ field.name }}[{{ field.maxLength }}])) {
             throw new \InvalidArgumentException('Value too long for field {{ field.name }}');
         }
-        {% elseif field.type == 'enum' %}
-        if (!in_array(${{ field.name }}, $this->{{ field.name }})) {
+
+{% elseif field.type == 'enum' %}
+        if (!in_array(${{ field.name }}, $this->{{ field.name }}Options)) {
             throw new \InvalidArgumentException('Invalid option for {{ field.name }}');
         }
-        {% endif %}
+
+{% endif %}
         $this->{{ field.name }} = ${{ field.name }};
 
         return $this;

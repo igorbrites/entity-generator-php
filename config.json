@@ -1,7 +1,5 @@
 {
-    "namespace": "MaxMilhas\\Entities\\Model",
-    "extends": "MaxMilhas\\DTO\\DTO",
-    "output-dir": "/home/ubuntu/Entidades",
+    "output-dir": "/home/ubuntu/Projetos/Entidades",
     "database": {
         "schema": "development",
         "host": "10.10.10.101",

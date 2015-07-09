@@ -2,24 +2,30 @@
 
 namespace EntityGenerator\Generator;
 
+use EntityGenerator\Util\Config;
 use EntityGenerator\Util\String;
 
 class Field extends Template
 {
-    const INT         = 'int';
-    const VARCHAR     = 'varchar';
-    const DATETIME    = 'datetime';
-    const DATE        = 'date';
-    const TIMESTAMP   = 'timestamp';
-    const ENUM        = 'enum';
-    const FLOAT       = 'float';
-    const TEXT        = 'text';
-    const FOREIGN_KEY = 'fk';
+    const INT       = 'int';
+    const VARCHAR   = 'varchar';
+    const DATETIME  = 'datetime';
+    const DATE      = 'date';
+    const TIMESTAMP = 'timestamp';
+    const ENUM      = 'enum';
+    const FLOAT     = 'float';
+    const TEXT      = 'text';
+    const STRING    = 'string';
 
     /**
      * @var string name
      */
     private $name;
+
+    /**
+     * @var string ucName
+     */
+    private $ucName;
 
     /**
      * @var mixed default
@@ -47,9 +53,9 @@ class Field extends Template
     private $maxLength;
 
     /**
-     * @var string foreignKey
+     * @var bool foreignKey
      */
-    private $foreignKey;
+    private $foreignKey = false;
 
     /**
      * @return string
@@ -67,6 +73,7 @@ class Field extends Template
     public function setName($name)
     {
         $this->name = $name;
+        $this->ucName = ucfirst($name);
 
         return $this;
     }
@@ -126,6 +133,12 @@ class Field extends Template
      */
     public function setType($type)
     {
+        if (in_array($type, [self::VARCHAR, self::TEXT])) {
+            $type = self::STRING;
+        } elseif (in_array($type, [self::DATETIME, self::DATE, self::TIMESTAMP])) {
+            $type = Config::getinstance()->getDateType();
+        }
+
         $this->type = $type;
 
         return $this;
@@ -172,15 +185,15 @@ class Field extends Template
     }
 
     /**
-     * @return string
+     * @return bool
      */
-    public function getForeignKey()
+    public function isForeignKey()
     {
         return $this->foreignKey;
     }
 
     /**
-     * @param string $foreignKey
+     * @param bool $foreignKey
      *
      * @return Field
      */
@@ -191,21 +204,38 @@ class Field extends Template
         return $this;
     }
 
+    /**
+     * @return string
+     */
+    public function getUcName()
+    {
+        return $this->ucName;
+    }
+
+    public function isTyped()
+    {
+        return in_array($this->type, [self::DATE, self::DATETIME, self::TIMESTAMP]) ||
+            $this->isForeignKey();
+    }
+
     public function getGetter()
     {
-        $template = $this->getTwig()->loadTemplate('getter');
+        $template = $this->getTwig()->loadTemplate('getter.twig');
+
         return $template->render(['field' => $this]);
     }
 
     public function getSetter()
     {
-        $template = $this->getTwig()->loadTemplate('setter');
+        $template = $this->getTwig()->loadTemplate('setter.twig');
+
         return $template->render(['field' => $this]);
     }
 
     public function getAttribute()
     {
-        $template = $this->getTwig()->loadTemplate('attribute');
+        $template = $this->getTwig()->loadTemplate('attribute.twig');
+
         return $template->render(['field' => $this]);
     }
 
@@ -226,15 +256,17 @@ class Field extends Template
 
         /** @var Field $field */
         $field = (new self())
-            ->setName($fieldName)
+            ->setName(String::convertToCamelCase($fieldName, true))
             ->setDefault($defaultValue)
             ->setNullable($isNullable)
-            ->setType(is_null($referencedEntity) ? $fieldDataType : Field::FOREIGN_KEY)
             ->setMaxLength($maxLength)
-        ;
+            ->setType($fieldDataType);
 
         if (!is_null($referencedEntity)) {
-            $field->setForeignKey($referencedEntity);
+            $field
+                ->setName(String::convertToCamelCase($referencedEntity, true))
+                ->setType(String::convertToCamelCase($referencedEntity))
+                ->setForeignKey(true);
         }
 
         if (Field::ENUM === $fieldDataType) {

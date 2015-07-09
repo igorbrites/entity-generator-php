@@ -29,6 +29,11 @@ class Config
      */
     private $extends;
 
+    /**
+     * @var string dateType
+     */
+    private $dateType = '\\DateTime';
+
     private function __construct()
     {
         $configFile = ROOT_PATH . '/config.json';
@@ -43,7 +48,8 @@ class Config
         $this->setOutputDir($config['output-dir']);
 
         empty($config['namespace']) || $this->setNamespace($config['namespace']);
-        empty($config['extends']) || $this->setNamespace($config['extends']);
+        empty($config['extends'])   || $this->setExtends($config['extends']);
+        empty($config['dateType'])  || $this->setDateType($config['dateType']);
     }
 
     /**
@@ -136,5 +142,21 @@ class Config
         $this->extends = $extends;
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDateType()
+    {
+        return $this->dateType;
+    }
+
+    /**
+     * @param string $dateType
+     */
+    public function setDateType($dateType)
+    {
+        $this->dateType = $dateType;
     }
 }
