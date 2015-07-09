@@ -5,7 +5,7 @@
 To use it, install via composer:
 
 ```
-composer require global igorbrites/entity-generator=dev-master
+composer global require igorbrites/entity-generator=dev-master
 ```
 
 Then, run the command:
