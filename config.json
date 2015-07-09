@@ -1,9 +1,9 @@
 {
     "output-dir": "/home/ubuntu/Projetos/Entidades",
     "database": {
-        "schema": "development",
-        "host": "10.10.10.101",
+        "schema": "database",
+        "host": "127.0.0.1",
         "user": "root",
-        "password": "maxmilhas"
+        "password": ""
     }
 }
