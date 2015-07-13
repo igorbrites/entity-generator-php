@@ -1,5 +1,5 @@
 {
-    "output-dir": "/home/ubuntu/Projetos/Entidades",
+    "output-dir": "/home/ubuntu/Entities",
     "database": {
         "schema": "database",
         "host": "127.0.0.1",
