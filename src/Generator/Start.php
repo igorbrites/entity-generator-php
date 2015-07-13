@@ -10,11 +10,20 @@ class Start
     {
         $connection = Database::getInstance()->getConnection();
 
-        $tables = $connection->query('SHOW TABLES', \PDO::FETCH_NUM);
+        $stmt = $connection->prepare('SHOW FULL TABLES WHERE Table_type != ?;');
+
+        if (!$stmt->execute(['VIEW'])) {
+            throw new \PDOException('Unable to get tables');
+        }
+
+        $tables = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+        echo "Preparing to generate " . count($tables) . " entities\n";
 
         foreach ($tables as $table) {
             $entity = (new Entity($table[0]))->generate();
-            $entity->saveToFile();
+            $entity->saveClassToFile();
+            $entity->saveTestToFile();
         }
     }
 }

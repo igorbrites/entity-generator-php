@@ -36,4 +36,17 @@ class String
     {
         return explode(",", str_replace("'", "", substr($enum, 5, (strlen($enum) - 6))));
     }
+
+    public static function convertForeignKeyName($fkName)
+    {
+        $count = null;
+        $pattern = Config::getinstance()->getFkPattern();
+        $return = preg_replace('/^' . $pattern . '$/', '$1', $fkName, -1, $count);
+
+        if ($count >= 0) {
+            return $return;
+        }
+
+        return $fkName;
+    }
 }

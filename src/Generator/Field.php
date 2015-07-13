@@ -8,13 +8,18 @@ use EntityGenerator\Util\String;
 class Field extends Template
 {
     const INT       = 'int';
+    const BIGINT    = 'bigint';
+    const TINYINT   = 'tinyint';
+
     const VARCHAR   = 'varchar';
+    const ENUM      = 'enum';
+    const TEXT      = 'text';
+
     const DATETIME  = 'datetime';
     const DATE      = 'date';
     const TIMESTAMP = 'timestamp';
-    const ENUM      = 'enum';
+
     const FLOAT     = 'float';
-    const TEXT      = 'text';
     const STRING    = 'string';
 
     /**
@@ -137,6 +142,8 @@ class Field extends Template
             $type = self::STRING;
         } elseif (in_array($type, [self::DATETIME, self::DATE, self::TIMESTAMP])) {
             $type = Config::getinstance()->getDateType();
+        } elseif (in_array($type, [self::INT, self::TINYINT, self::BIGINT])) {
+            $type = self::INT;
         }
 
         $this->type = $type;
@@ -212,10 +219,48 @@ class Field extends Template
         return $this->ucName;
     }
 
+    public function getProvider()
+    {
+        $provider = '';
+
+        switch ($this->type) {
+            case self::STRING:
+                $provider = 'String';
+                break;
+
+            case self::FLOAT:
+                $provider = 'Float';
+                break;
+
+            case self::INT:
+                $provider = 'Integer';
+                break;
+
+            default:
+                if ($this->isTyped() && $this->isNullable()) {
+                    $provider = 'Object';
+                }
+        }
+
+        if (empty($provider)) {
+            return null;
+        }
+
+        if ($this->isNullable()) {
+            $provider .= 'Nullable';
+        } else {
+
+        }
+
+        $provider .= $this->isNullable() ? 'Nullable' : 'NotNull';
+
+        return 'provider' . $provider;
+    }
+
     public function isTyped()
     {
         return in_array($this->type, [self::DATE, self::DATETIME, self::TIMESTAMP]) ||
-            $this->isForeignKey();
+        $this->isForeignKey();
     }
 
     public function getGetter()
@@ -263,8 +308,10 @@ class Field extends Template
             ->setType($fieldDataType);
 
         if (!is_null($referencedEntity)) {
+            $fkName = String::convertForeignKeyName($fieldName);
+
             $field
-                ->setName(String::convertToCamelCase($referencedEntity, true))
+                ->setName(String::convertToCamelCase($fkName, true) . 'Entity')
                 ->setType(String::convertToCamelCase($referencedEntity))
                 ->setForeignKey(true);
         }

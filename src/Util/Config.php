@@ -30,9 +30,19 @@ class Config
     private $extends;
 
     /**
+     * @var string fkPattern
+     */
+    private $fkPattern = '([a-z_]+)_id';
+
+    /**
      * @var string dateType
      */
     private $dateType = '\\DateTime';
+
+    /**
+     * @var bool generateTests
+     */
+    private $generateTests = true;
 
     private function __construct()
     {
@@ -47,9 +57,11 @@ class Config
         $this->setDatabase($config['database']);
         $this->setOutputDir($config['output-dir']);
 
-        empty($config['namespace']) || $this->setNamespace($config['namespace']);
-        empty($config['extends'])   || $this->setExtends($config['extends']);
-        empty($config['dateType'])  || $this->setDateType($config['dateType']);
+        empty($config['namespace'])  || $this->setNamespace($config['namespace']);
+        empty($config['extends'])    || $this->setExtends($config['extends']);
+        empty($config['date-type'])  || $this->setDateType($config['date-type']);
+        empty($config['fk-pattern']) || $this->setFkPattern($config['fk-pattern']);
+        isset($config['generate-tests']) && $this->setGenerateTests($config['generate-tests']);
     }
 
     /**
@@ -158,5 +170,37 @@ class Config
     public function setDateType($dateType)
     {
         $this->dateType = $dateType;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFkPattern()
+    {
+        return $this->fkPattern;
+    }
+
+    /**
+     * @param string $fkPattern
+     */
+    public function setFkPattern($fkPattern)
+    {
+        $this->fkPattern = $fkPattern;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isGenerateTests()
+    {
+        return $this->generateTests;
+    }
+
+    /**
+     * @param boolean $generateTests
+     */
+    public function setGenerateTests($generateTests)
+    {
+        $this->generateTests = $generateTests;
     }
 }

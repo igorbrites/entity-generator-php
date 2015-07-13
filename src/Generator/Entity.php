@@ -19,9 +19,14 @@ class Entity extends Template
     private $name;
 
     /**
-     * @var string file
+     * @var string classFile
      */
-    private $file;
+    private $classFile;
+
+    /**
+     * @var string testFile
+     */
+    private $testFile;
 
     /**
      * @var Field fields
@@ -35,7 +40,7 @@ class Entity extends Template
         $this->tableName = $tableName;
         $this->name = String::convertToCamelCase($tableName);
 
-        $this->file = '';
+        $this->classFile = '';
         $this->fields = [];
     }
 
@@ -82,21 +87,37 @@ class Entity extends Template
     /**
      * @return string
      */
-    public function getFile()
+    public function getClassFile()
     {
-        return $this->file;
+        return $this->classFile;
     }
 
     /**
-     * @param string $file
+     * @param string $classFile
      *
      * @return Entity
      */
-    public function setFile($file)
+    public function setClassFile($classFile)
     {
-        $this->file = $file;
+        $this->classFile = $classFile;
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTestFile()
+    {
+        return $this->testFile;
+    }
+
+    /**
+     * @param string $testFile
+     */
+    public function setTestFile($testFile)
+    {
+        $this->testFile = $testFile;
     }
 
     /**
@@ -136,6 +157,8 @@ class Entity extends Template
      */
     public function generate()
     {
+        echo "\nGenerating entity for table '{$this->tableName}'\n";
+
         $connection = Database::getInstance()->getConnection();
 
         $stmt = $connection->prepare(
@@ -166,8 +189,16 @@ class Entity extends Template
         $fields = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($fields as $array) {
+            // echo "Generating field '{$array['COLUMN_NAME']}' for table '{$this->tableName}'\n";
+
             $field = Field::createFromArray($array);
             $this->addField($field);
+
+            if ($field->isForeignKey()) {
+                $array['REFERENCED_TABLE_NAME'] = null;
+                $field = Field::createFromArray($array);
+                $this->addField($field);
+            }
         }
 
         return $this;
@@ -176,10 +207,25 @@ class Entity extends Template
     /**
      * @return Entity
      */
-    public function render()
+    public function renderClass()
     {
+        echo "Rendering class '{$this->name}'\n";
+
         $template = $this->getTwig()->loadTemplate('entity.twig');
-        $this->setFile($template->render(['entity' => $this, 'config' => Config::getinstance()]));
+        $this->setClassFile($template->render(['entity' => $this, 'config' => Config::getinstance()]));
+
+        return $this;
+    }
+
+    /**
+     * @return Entity
+     */
+    public function renderTest()
+    {
+        echo "Rendering test class '{$this->name}Test'\n";
+
+        $template = $this->getTwig()->loadTemplate('entityTest.twig');
+        $this->setTestFile($template->render(['entity' => $this, 'config' => Config::getinstance()]));
 
         return $this;
     }
@@ -187,18 +233,48 @@ class Entity extends Template
     /**
      * @return int
      */
-    public function saveToFile()
+    public function saveClassToFile()
     {
-        if (empty($this->file)) {
-            $this->render();
+        if (empty($this->classFile)) {
+            $this->renderClass();
         }
 
         $config = Config::getinstance();
 
-        if (!file_exists($config->getOutputDir())) {
-            mkdir($config->getOutputDir(), 0777, true);
+        if (!file_exists($config->getOutputDir() . '/classes')) {
+            mkdir($config->getOutputDir() . '/classes', 0777, true);
         }
 
-        return file_put_contents($config->getOutputDir() . '/' . $this->name . '.php', $this->file);
+        $path = $config->getOutputDir() . '/classes/' . $this->name . '.php';
+
+        echo "Saving class '{$this->name}' to path '{$path}'\n";
+
+        return file_put_contents($path, $this->classFile);
+    }
+
+    /**
+     * @return int
+     */
+    public function saveTestToFile()
+    {
+        if (!Config::getinstance()->isGenerateTests()) {
+            return null;
+        }
+
+        if (empty($this->testFile)) {
+            $this->renderTest();
+        }
+
+        $config = Config::getinstance();
+
+        if (!file_exists($config->getOutputDir() . '/tests')) {
+            mkdir($config->getOutputDir() . '/tests', 0777, true);
+        }
+
+        $path = $config->getOutputDir() . '/tests/' . $this->name . 'Test.php';
+
+        echo "Saving test class '{$this->name}Test' to path '{$path}'\n";
+
+        return file_put_contents($path, $this->testFile);
     }
 }
