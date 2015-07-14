@@ -1,0 +1,3 @@
+    if (!is_null(${{ field.name }}) && !is_numeric(${{ field.name }})) {
+            throw new \InvalidArgumentException('Value must me numeric for field {{ field.name }}');
+        }

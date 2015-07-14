@@ -1,0 +1,11 @@
+    if (is_bool(${{ field.name }})) {
+            throw new \InvalidArgumentException('Value cannot be boolean for field {{ field.name }}');
+        }
+
+        if (is_array(${{ field.name }})) {
+            throw new \InvalidArgumentException('Value cannot be an array for field {{ field.name }}');
+        }
+
+        if (is_object(${{ field.name }}) && !method_exists(${{ field.name }}, '__toString')) {
+            throw new \InvalidArgumentException('Value cannot be an object without magic method "__toString" for field {{ field.name }}');
+        }

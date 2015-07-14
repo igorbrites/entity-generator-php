@@ -1,0 +1,11 @@
+    if (empty(${{ field.name }})) {
+            throw new \InvalidArgumentException('Primary key {{ field.name }} cannot be empty');
+        }
+
+        if (!is_null(${{ field.name }}) && !is_numeric(${{ field.name }})) {
+            throw new \InvalidArgumentException('Primary key {{ field.name }} must be numeric');
+        }
+
+        if (!is_null(${{ field.name }}) && is_float(${{ field.name }})) {
+            throw new \InvalidArgumentException('Primary key {{ field.name }} must be integer');
+        }

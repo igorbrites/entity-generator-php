@@ -11,6 +11,7 @@ class Field extends Template
     const BIGINT    = 'bigint';
     const TINYINT   = 'tinyint';
 
+    const CHAR      = 'char';
     const VARCHAR   = 'varchar';
     const ENUM      = 'enum';
     const TEXT      = 'text';
@@ -63,6 +64,16 @@ class Field extends Template
     private $foreignKey = false;
 
     /**
+     * @var bool primaryKey
+     */
+    private $primaryKey = false;
+
+    /**
+     * @var bool date
+     */
+    private $date = false;
+
+    /**
      * @return string
      */
     public function getName()
@@ -88,7 +99,13 @@ class Field extends Template
      */
     public function getDefault()
     {
-        return $this->default;
+        $default = $this->default;
+
+        if (in_array($this->type, [self::STRING, self::ENUM])) {
+            $default = "'$default'";
+        }
+
+        return $default;
     }
 
     /**
@@ -98,6 +115,10 @@ class Field extends Template
      */
     public function setDefault($default)
     {
+        if ($this->isTyped()) {
+            $default = null;
+        }
+
         $this->default = $default;
 
         return $this;
@@ -138,10 +159,12 @@ class Field extends Template
      */
     public function setType($type)
     {
-        if (in_array($type, [self::VARCHAR, self::TEXT])) {
+        if (in_array($type, [self::VARCHAR, self::TEXT, self::CHAR])) {
             $type = self::STRING;
+            $this->setPrimaryKey(false);
         } elseif (in_array($type, [self::DATETIME, self::DATE, self::TIMESTAMP])) {
             $type = Config::getinstance()->getDateType();
+            $this->setDate(true);
         } elseif (in_array($type, [self::INT, self::TINYINT, self::BIGINT])) {
             $type = self::INT;
         }
@@ -212,6 +235,46 @@ class Field extends Template
     }
 
     /**
+     * @return boolean
+     */
+    public function isPrimaryKey()
+    {
+        return $this->primaryKey;
+    }
+
+    /**
+     * @param boolean $primaryKey
+     *
+     * @return Field
+     */
+    public function setPrimaryKey($primaryKey)
+    {
+        $this->primaryKey = $primaryKey;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isDate()
+    {
+        return $this->date;
+    }
+
+    /**
+     * @param boolean $date
+     *
+     * @return Field
+     */
+    public function setDate($date)
+    {
+        $this->date = $date;
+
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getUcName()
@@ -221,9 +284,21 @@ class Field extends Template
 
     public function getProvider()
     {
+        if ($this->isForeignKey()) {
+            return null;
+        }
+
+        if ($this->isPrimaryKey()) {
+            return 'providerPrimaryKey';
+        }
+
         $provider = '';
 
         switch ($this->type) {
+            case self::ENUM:
+                $provider = 'Enum';
+                break;
+
             case self::STRING:
                 $provider = 'String';
                 break;
@@ -235,21 +310,10 @@ class Field extends Template
             case self::INT:
                 $provider = 'Integer';
                 break;
-
-            default:
-                if ($this->isTyped() && $this->isNullable()) {
-                    $provider = 'Object';
-                }
         }
 
         if (empty($provider)) {
             return null;
-        }
-
-        if ($this->isNullable()) {
-            $provider .= 'Nullable';
-        } else {
-
         }
 
         $provider .= $this->isNullable() ? 'Nullable' : 'NotNull';
@@ -259,8 +323,12 @@ class Field extends Template
 
     public function isTyped()
     {
-        return in_array($this->type, [self::DATE, self::DATETIME, self::TIMESTAMP]) ||
-        $this->isForeignKey();
+        return $this->getType() === Config::getinstance()->getDateType() || $this->isForeignKey();
+    }
+
+    public function isCasted()
+    {
+        return in_array($this->type, [self::STRING, self::FLOAT, self::INT]);
     }
 
     public function getGetter()
@@ -293,6 +361,7 @@ class Field extends Template
     {
         $fieldName = $array['COLUMN_NAME'];
         $defaultValue = $array['COLUMN_DEFAULT'];
+        $isPrimaryKey = $array['COLUMN_KEY'] === 'PRI';
         $isNullable = $array['IS_NULLABLE'] === 'YES';
         $fieldDataType = $array['DATA_TYPE'];
         $fieldType = $array['COLUMN_TYPE'];
@@ -302,10 +371,11 @@ class Field extends Template
         /** @var Field $field */
         $field = (new self())
             ->setName(String::convertToCamelCase($fieldName, true))
-            ->setDefault($defaultValue)
             ->setNullable($isNullable)
             ->setMaxLength($maxLength)
-            ->setType($fieldDataType);
+            ->setPrimaryKey($isPrimaryKey)
+            ->setType($fieldDataType)
+            ->setDefault($defaultValue);
 
         if (!is_null($referencedEntity)) {
             $fkName = String::convertForeignKeyName($fieldName);
@@ -313,7 +383,9 @@ class Field extends Template
             $field
                 ->setName(String::convertToCamelCase($fkName, true) . 'Entity')
                 ->setType(String::convertToCamelCase($referencedEntity))
-                ->setForeignKey(true);
+                ->setForeignKey(true)
+                ->setPrimaryKey(false)
+                ->setDefault(null);
         }
 
         if (Field::ENUM === $fieldDataType) {

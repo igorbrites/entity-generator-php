@@ -7,26 +7,35 @@
      * @throws \InvalidArgumentException
      * @return $this
      */
-    public function set{{ field.ucName }}({% if field.isTyped %}{{ field.type }} {% endif %}${{ field.name }})
+    public function set{{ field.ucName }}({% if field.isTyped %}{{ field.type }} {% endif %}${{ field.name }}{% if field.default %} = {{ field.default }}{% elseif field.nullable %} = null{% endif %})
     {
 {% if not field.nullable %}
-        if (is_null(${{ field.name }})) {
-            throw new \InvalidArgumentException('Field {{ field.name }} cannot be null');
-        }
+    {% include 'not-null.twig' %}
 
 {% endif %}
-{% if field.type == 'varchar' %}
-        if (isset(${{ field.name }}[{{ field.maxLength }}])) {
-            throw new \InvalidArgumentException('Value too long for field {{ field.name }}');
-        }
+{% if field.isPrimaryKey %}
+    {% include 'primary-key.twig' %}
+
+{% elseif field.type == 'string' %}
+    {% include 'string.twig' %}
 
 {% elseif field.type == 'enum' %}
-        if (!in_array(${{ field.name }}, $this->{{ field.name }}Options)) {
-            throw new \InvalidArgumentException('Invalid option for {{ field.name }}');
-        }
+    {% include 'enum.twig' %}
+
+{% elseif field.type == 'float' %}
+    {% include 'float.twig' %}
+
+{% elseif field.type == 'int' %}
+    {% include 'integer.twig' %}
 
 {% endif %}
-        $this->{{ field.name }} = ${{ field.name }};
+{% if field.isDate %}
+    if (is_string(${{ field.name }})) {
+        ${{ field.name }} = new {{ field.type }}(${{ field.name }});
+    }
+
+{% endif %}
+        $this->{{ field.name }} = is_null(${{ field.name }}) ? null : {% if field.isCasted %}({{ field.type }}){% endif %}${{ field.name }};
 
         return $this;
     }

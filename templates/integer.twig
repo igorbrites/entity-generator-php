@@ -1,0 +1,7 @@
+    if (!is_null(${{ field.name }}) && is_float(${{ field.name }})) {
+            throw new \InvalidArgumentException('Value must me integer for field {{ field.name }}');
+        }
+
+        if (!is_null(${{ field.name }}) && !is_numeric(${{ field.name }})) {
+            throw new \InvalidArgumentException('Value must me numeric for field {{ field.name }}');
+        }

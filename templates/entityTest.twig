@@ -34,6 +34,7 @@ class {{ entity.name }}Test extends \PHPUnit_Framework_TestCase
 
 {% for field in entity.fields %}
     {% if field.provider %}
+
     /**
      * @dataProvider {{ field.provider }}
      * @covers       {% if config.namespace %}{{ config.namespace }}\{% endif %}{{ entity.name }}::set{{ field.ucName }}
@@ -41,11 +42,11 @@ class {{ entity.name }}Test extends \PHPUnit_Framework_TestCase
      * @param $test
      * @param $expected
      *
-     * @throws \Exception
+     * @throws \InvalidArgumentException
      */
     public function testSet{{ field.ucName }}($test, $expected)
     {
-        if ($expected instanceof \Exception) {
+        if ($expected instanceof \InvalidArgumentException) {
             $this->setExpectedException(get_class($expected));
         }
 
@@ -54,103 +55,146 @@ class {{ entity.name }}Test extends \PHPUnit_Framework_TestCase
     }
     {% endif %}
 {% endfor %}
-public function providerIntegerNotNull()
+
+    public function providerPrimaryKey()
     {
-        $e = new \Exception();
+        $e = new \InvalidArgumentException();
 
         return [
             [10, 10, 'Int'],
             [2.35, $e, 'Float'],
             ['10', 10, 'Valid String'],
-            ['Abobrinha', $e, 'Invalid String'],
+            ['Ok', $e, 'Invalid String'],
             [false, $e, 'Boolean'],
             [null, $e, 'Null'],
             [0, $e, 'Zero']
+        ];
+    }
+
+    public function providerIntegerNotNull()
+    {
+        $e = new \InvalidArgumentException();
+
+        return [
+            [10, 10, 'Int'],
+            [2.35, $e, 'Float'],
+            ['10', 10, 'Valid String'],
+            ['Ok', $e, 'Invalid String'],
+            [false, $e, 'Boolean'],
+            [null, $e, 'Null']
         ];
     }
 
     public function providerIntegerNullable()
     {
-        $e = new \Exception();
+        $e = new \InvalidArgumentException();
 
         return [
             [10, 10, 'Int'],
             [null, null, 'Null'],
             [2.35, $e, 'Float'],
             ['10', 10, 'Valid String'],
-            ['Abobrinha', $e, 'Invalid String'],
-            [false, $e, 'Boolean'],
-            [0, $e, 'Zero']
+            ['Ok', $e, 'Invalid String'],
+            [false, $e, 'Boolean']
         ];
     }
 
     public function providerStringNotNull()
     {
-        $e = new \Exception();
+        $e = new \InvalidArgumentException();
+        $obj = new TestObject();
 
         return [
-            ['Apple', 'Apple', 'Valid String'],
+            ['Ok', 'Ok', 'Valid String'],
             ['10', '10', 'Valid Numeric String'],
-            [10, $e, 'Int'],
-            [2.35, $e, 'Float'],
+            [10, '10', 'Int'],
+            [2.35, '2.35', 'Float'],
             [false, $e, 'Boolean'],
             [null, $e, 'Null'],
-            [0, $e, 'Zero']
+            [[], $e, 'Array'],
+            [new \stdClass(), $e, 'Invalid Object'],
+            [$obj, "$obj", 'Valid Object'],
+            [0, '0', 'Zero']
         ];
     }
 
     public function providerStringNullable()
     {
-        $e = new \Exception();
+        $e = new \InvalidArgumentException();
+        $obj = new TestObject();
 
         return [
-            ['Apple', 'Apple', 'Valid String'],
+            ['Ok', 'Ok', 'Valid String'],
             ['10', '10', 'Valid Numeric String'],
-            [null, null, 'Null'],
-            [10, $e, 'Int'],
-            [2.35, $e, 'Float'],
+            [10, '10', 'Int'],
+            [2.35, '2.35', 'Float'],
             [false, $e, 'Boolean'],
-            [0, $e, 'Zero']
+            [null, null, 'Null'],
+            [[], $e, 'Array'],
+            [new \stdClass(), $e, 'Invalid Object'],
+            [$obj, "$obj", 'Valid Object'],
+            [0, '0', 'Zero']
         ];
     }
 
     public function providerFloatNotNull()
     {
-        $e = new \Exception();
+        $e = new \InvalidArgumentException();
 
         return [
             [2.35, 2.35, 'Float'],
-            ['Apple', $e, 'Invalid String'],
-            ['10', $e, 'Invalid String'],
-            [10, $e, 'Int'],
-            [false, $e, 'Boolean'],
             [null, $e, 'Null'],
-            [0, $e, 'Zero']
+            ['Ok', $e, 'Valid String'],
+            ['10', 10.0, 'Invalid Numeric String'],
+            [10, 10.0, 'Int'],
+            [false, $e, 'Boolean'],
+            [0, 0.0, 'Zero']
         ];
     }
 
     public function providerFloatNullable()
     {
-        $e = new \Exception();
+        $e = new \InvalidArgumentException();
 
         return [
             [2.35, 2.35, 'Float'],
             [null, null, 'Null'],
-            ['Apple', $e, 'Valid String'],
-            ['10', $e, 'Invalid Numeric String'],
-            [10, $e, 'Int'],
+            ['Ok', $e, 'Valid String'],
+            ['10', 10.0, 'Invalid Numeric String'],
+            [10, 10.0, 'Int'],
             [false, $e, 'Boolean'],
-            [0, $e, 'Zero']
+            [0, 0.0, 'Zero']
         ];
     }
 
-    public function providerObjectNotNull()
+    public function providerEnumNotNull()
     {
-        $e = new \Exception();
+        $e = new \InvalidArgumentException();
 
         return [
-            [null, $e, 'Null']
+            ['Ok', $e, 'Invalid option for Enum'],
+            [null, $e, 'Null'],
         ];
+    }
+
+    public function providerEnumNullable()
+    {
+        $e = new \InvalidArgumentException();
+
+        return [
+            ['Ok', $e, 'Invalid option for Enum'],
+            [null, null, 'Null'],
+        ];
+    }
+}
+
+if (!class_exists('\{% if config.namespace %}{{ config.namespace }}\{% endif %}TestObject')) {
+    class TestObject
+    {
+        public function __toString()
+        {
+            return 'Ok';
+        }
     }
 }
 {% endautoescape %}

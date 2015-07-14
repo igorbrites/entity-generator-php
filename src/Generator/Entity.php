@@ -165,21 +165,31 @@ class Entity extends Template
             ' SELECT ' .
             '    c.COLUMN_NAME,' .
             '    c.COLUMN_DEFAULT,' .
+            '    c.COLUMN_KEY,' .
             '    c.IS_NULLABLE,' .
             '    c.DATA_TYPE,' .
             '    c.COLUMN_TYPE,' .
             '    c.CHARACTER_MAXIMUM_LENGTH,' .
-            '    k.REFERENCED_TABLE_NAME,' .
-            '    k.REFERENCED_COLUMN_NAME' .
-            ' FROM ' .
+            '    GROUP_CONCAT(k.REFERENCED_TABLE_NAME) REFERENCED_TABLE_NAME,' .
+            '    GROUP_CONCAT(k.REFERENCED_COLUMN_NAME) REFERENCED_COLUMN_NAME' .
+            ' FROM' .
             '    information_schema.COLUMNS c' .
             '        LEFT JOIN' .
-            '    information_schema.KEY_COLUMN_USAGE k ON c.TABLE_SCHEMA = k.TABLE_SCHEMA' .
+            '    information_schema.KEY_COLUMN_USAGE k' .
+            '        ON c.TABLE_SCHEMA = k.TABLE_SCHEMA' .
             '        AND c.TABLE_NAME = k.TABLE_NAME' .
             '        AND c.COLUMN_NAME = k.COLUMN_NAME' .
-            ' WHERE ' .
-            '    c.TABLE_SCHEMA = ?' .
-            '    AND c.TABLE_NAME = ?;'
+            ' WHERE' .
+            '    c.TABLE_SCHEMA = ? ' .
+            '        AND c.TABLE_NAME = ? ' .
+            ' GROUP BY ' .
+            '    c.COLUMN_NAME,' .
+            '    c.COLUMN_DEFAULT,' .
+            '    c.COLUMN_KEY,' .
+            '    c.IS_NULLABLE,' .
+            '    c.DATA_TYPE,' .
+            '    c.COLUMN_TYPE,' .
+            '    c.CHARACTER_MAXIMUM_LENGTH;'
         );
 
         if (!$stmt->execute([Config::getinstance()->getDatabase()['schema'], $this->tableName])) {
@@ -189,7 +199,7 @@ class Entity extends Template
         $fields = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($fields as $array) {
-            // echo "Generating field '{$array['COLUMN_NAME']}' for table '{$this->tableName}'\n";
+            //echo "Generating field '{$array['COLUMN_NAME']}' for table '{$this->tableName}'\n";
 
             $field = Field::createFromArray($array);
             $this->addField($field);
