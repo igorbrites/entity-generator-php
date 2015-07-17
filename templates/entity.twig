@@ -19,6 +19,14 @@ namespace {{ config.namespace }};
 class {{ entity.name }} {% if config.extends %}extends \{{ config.extends }}{% endif %}
 
 {
+    // region DONT REPLACE
+    // endregion
+
+    /**
+     * @var array relations
+     */
+    protected $relations = [{% for relation in entity.relations %}'{{ relation }}',{% endfor %}];
+
 {% for field in entity.fields %}
     {{ field.attribute }}
 {% endfor %}
@@ -26,5 +34,13 @@ class {{ entity.name }} {% if config.extends %}extends \{{ config.extends }}{% e
     {{ field.setter }}
     {{ field.getter }}
 {% endfor %}
+    /**
+     * Returns the relations of this entity
+     * @return array
+     */
+    public function getRelations()
+    {
+        return $this->relations;
+    }
 }
 {% endautoescape %}

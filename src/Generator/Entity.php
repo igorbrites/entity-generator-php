@@ -33,6 +33,11 @@ class Entity extends Template
      */
     private $fields;
 
+    /**
+     * @var array relations
+     */
+    private $relations = [];
+
     public function __construct($tableName)
     {
         parent::__construct();
@@ -153,6 +158,38 @@ class Entity extends Template
     }
 
     /**
+     * @return array
+     */
+    public function getRelations()
+    {
+        return $this->relations;
+    }
+
+    /**
+     * @param array $relations
+     *
+     * @return Entity
+     */
+    public function setRelations($relations)
+    {
+        $this->relations = $relations;
+
+        return $this;
+    }
+
+    /**
+     * @param string $field
+     *
+     * @return $this
+     */
+    public function addRelation($field)
+    {
+        $this->relations[] = $field;
+
+        return $this;
+    }
+
+    /**
      * @return Entity
      */
     public function generate()
@@ -206,6 +243,7 @@ class Entity extends Template
 
             if ($field->isForeignKey()) {
                 $array['REFERENCED_TABLE_NAME'] = null;
+                $this->addRelation($array['COLUMN_NAME']);
                 $field = Field::createFromArray($array);
                 $this->addField($field);
             }
@@ -256,6 +294,16 @@ class Entity extends Template
         }
 
         $path = $config->getOutputDir() . '/classes/' . $this->name . '.php';
+
+        if (file_exists($path)) {
+            $matches = [];
+            $pattern = '/\/\/[\s]*region DONT REPLACE\n(.*)[\n]*\/\/[\s]*endregion/sm';
+            $match = preg_match_all($pattern, file_get_contents($path), $matches);
+
+            if ($match > 0) {
+                $this->classFile = preg_replace($pattern, current($matches[0]), $this->classFile);
+            }
+        }
 
         echo "Saving class '{$this->name}' to path '{$path}'\n";
 

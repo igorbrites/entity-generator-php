@@ -8,8 +8,9 @@
     {
         return $this->{{ field.name }};
     }
+
     {% if field.type == 'enum' %}
-    /**
+/**
      * Returns the options for field {{ field.name }}
      *
      * @return array

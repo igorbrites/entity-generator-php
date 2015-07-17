@@ -30,9 +30,9 @@
 
 {% endif %}
 {% if field.isDate %}
-    if (is_string(${{ field.name }})) {
-        ${{ field.name }} = new {{ field.type }}(${{ field.name }});
-    }
+        if (is_string(${{ field.name }})) {
+            ${{ field.name }} = new {{ field.type }}(${{ field.name }});
+        }
 
 {% endif %}
         $this->{{ field.name }} = is_null(${{ field.name }}) ? null : {% if field.isCasted %}({{ field.type }}){% endif %}${{ field.name }};
