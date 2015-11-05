@@ -19,6 +19,7 @@ class Field extends Template
     const DATETIME  = 'datetime';
     const DATE      = 'date';
     const TIMESTAMP = 'timestamp';
+    const TIME      = 'time';
 
     const FLOAT     = 'float';
     const STRING    = 'string';
@@ -101,7 +102,7 @@ class Field extends Template
     {
         $default = $this->default;
 
-        if (in_array($this->type, [self::STRING, self::ENUM])) {
+        if (in_array($this->type, [self::STRING, self::ENUM, self::TIME])) {
             $default = "'$default'";
         }
 
@@ -159,7 +160,7 @@ class Field extends Template
      */
     public function setType($type)
     {
-        if (in_array($type, [self::VARCHAR, self::TEXT, self::CHAR])) {
+        if (in_array($type, [self::VARCHAR, self::TEXT, self::CHAR, self::TIME])) {
             $type = self::STRING;
             $this->setPrimaryKey(false);
         } elseif (in_array($type, [self::DATETIME, self::DATE, self::TIMESTAMP])) {
